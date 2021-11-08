@@ -1,0 +1,30 @@
+<LayoutModificationTemplate
+    xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification"
+    xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout"
+    xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout"
+    xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout"
+    Version="1">
+  <LayoutOptions StartTileGroupCellWidth="{{ desktop_startlayouts['group_cell_width'] }}" />
+  <DefaultLayoutOverride>
+    <StartLayoutCollection>
+      <defaultlayout:StartLayout GroupCellWidth="{{ desktop_startlayouts['group_cell_width'] }}">
+{% for startlayout in desktop_startlayouts.startlayout %}
+        <start:Group Name="{{ startlayout.group }}">
+{% for item in startlayout.icons %}
+          <start:{% if item.DesktopApplicationLinkPath is defined %}DesktopApplicationTile{% elif item.AppUserModelID is defined %}Tile{% endif %} Size="{{ item.Size }}" Column="{{ item.Column }}" Row="{{ item.Row }}" {% if item.DesktopApplicationLinkPath is defined %}DesktopApplicationLinkPath="{{ item.DesktopApplicationLinkPath }}"{% elif item.AppUserModelID is defined %}AppUserModelID="{{ item.AppUserModelID }}"{% endif %} />
+{% endfor %}
+        </start:Group>
+{% endfor %}
+      </defaultlayout:StartLayout>
+    </StartLayoutCollection>
+  </DefaultLayoutOverride>
+  <CustomTaskbarLayoutCollection PinListPlacement="Replace">
+    <defaultlayout:TaskbarLayout>
+      <taskbar:TaskbarPinList>
+{% for tasklayout in desktop_startlayouts.tasklayout %}
+        <taskbar:{{ tasklayout.taskbar }} {% if tasklayout.DesktopApplicationLinkPath is defined %}DesktopApplicationLinkPath="{{ tasklayout.DesktopApplicationLinkPath }}"{% elif tasklayout.AppUserModelID is defined %}AppUserModelID="{{ tasklayout.AppUserModelID }}" {% endif %} />
+{% endfor %}
+      </taskbar:TaskbarPinList>
+    </defaultlayout:TaskbarLayout>
+  </CustomTaskbarLayoutCollection>
+</LayoutModificationTemplate>

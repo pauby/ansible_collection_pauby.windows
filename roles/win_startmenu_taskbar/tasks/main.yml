@@ -1,0 +1,41 @@
+---
+
+- name: 'Gather facts for user'
+  ansible.builtin.gather_facts:
+  become_flags: 'logon_flags=with_profile'
+  when: (user_home is undefined)
+
+- ansible.builtin.set_fact:
+    user_home: '{{ ansible_facts["env"]["USERPROFILE"] }}'
+  when: (user_home is undefined)
+
+- name: 'Create Start layout'
+  win_template:
+    src: 'templates/StartLayouts.xml.j2'
+    dest: '{{ user_home }}\AppData\Local\Microsoft\Windows\Shell\DefaultLayouts.xml'
+  register: _startlayout
+
+- name: 'Import new start layout'
+  win_shell: 'Import-StartLayout -LayoutPath "{{ user_home }}\AppData\Local\Microsoft\Windows\Shell\DefaultLayouts.xml" -MountPath $env:SystemDrive\'
+  args:
+    no_profile: yes
+  when: (_startlayout.changed)
+
+# See https://www.reddit.com/r/k12sysadmin/comments/7nqvng/windows_10_custom_start_layout_requires_a_second/ds4mn9k/?utm_source=reddit&utm_medium=web2x&context=3
+# https://www.tenforums.com/tutorials/3088-backup-restore-start-layout-windows-10-a.html#option2
+# https://www.tenforums.com/tutorials/105001-set-default-start-layout-users-windows-10-a.html#optionp
+# https://docs.microsoft.com/en-us/windows-hardware/customize/desktop/customize-start-layout
+# https://docs.microsoft.com/en-us/windows/configuration/find-the-application-user-model-id-of-an-installed-app
+# https://docs.microsoft.com/en-us/windows/configuration/windows-10-start-layout-options-and-policies
+# https://docs.microsoft.com/en-us/windows/configuration/configure-windows-10-taskbar
+# https://github.com/TurboLabIt/StartTileBackup
+# LayoutModification s file https://docs.microsoft.com/en-us/windows/configuration/start-layout-xml-desktop
+# https://gal.vin/posts/start-menu-and-taskbar-customisation/
+#
+- name: 'Apply start layout at next login'
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store'
+    state: 'absent'
+  when: (_startlayout.changed)
+  become: true
+  become_method: 'runas'
